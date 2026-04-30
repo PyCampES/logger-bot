@@ -8,9 +8,17 @@ from telegram.ext import (
     filters,
 )
 
+from logger_bot.model import Extractor
+
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
+
+extractor = Extractor()
+
+
+def speech2text(file_path, extractor: Extractor):
+    return extractor.transcribe_audio(file_path)
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -23,9 +31,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     file = await context.bot.get_file(audio.file_id)
     file_path = f"received_{audio.file_id}"
     await file.download_to_drive(custom_path=file_path)
+    text = speech2text(file_path, extractor=extractor)
+    # TODO: clean up text
+
+    logging.info(f"Escuche {text}")
     await context.bot.send_message(
-        chat_id=update.effective_chat.id,
-        text=f"Te escuche y mandaste {len(file_path)} bytes",
+        chat_id=update.effective_chat.id, text=f"Escuche esto: {text}"
     )
 
 
