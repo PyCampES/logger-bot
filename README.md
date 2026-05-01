@@ -8,13 +8,13 @@ flowchart LR
     user([User])
     telegram(Telegram Bot)
     server([Server])
-    model([Model Speech2Text])
+    extractor([Speech2Text + parsing])
     logger([Logger])
 
     user -- voice --> telegram
     telegram -- webhook --> server
-    server -- audio --> model
-    model -- text --> server
+    server -- audio --> extractor
+    extractor -- text --> server
     server -- text --> logger
 ```
 
