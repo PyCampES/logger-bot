@@ -16,6 +16,7 @@ class SimpleCSVLogger(Logger):
         self.headers = [
             "date",
             "time",
+            "category",
             "exercise",
             "reps",
             "weight",
@@ -34,6 +35,7 @@ class SimpleCSVLogger(Logger):
             now.strftime("%Y-%m-%d"),
             now.strftime("%H:%M:%S"),
             data.get("exercise", ""),
+            data.get("category", ""),
             data.get("reps", ""),
             data.get("weight", ""),
             data.get("unit", ""),
