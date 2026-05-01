@@ -21,10 +21,8 @@ flowchart LR
 
 ## Requirements
 
-- Python >= 3.12
 - [`uv`](https://github.com/astral-sh/uv) package manager
 - A Telegram bot token (from [@BotFather](https://t.me/BotFather))
-- A Google service account with access to a Google Sheet named `"Logueala"`
 
 ## Setup
 

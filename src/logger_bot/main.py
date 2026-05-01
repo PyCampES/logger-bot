@@ -1,3 +1,4 @@
+import os
 import logging
 from pathlib import Path
 from telegram import Update
@@ -7,14 +8,21 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
+from dotenv import load_dotenv
+
+
+# Code of your application, which uses environment variables (e.g. from `os.environ` or
+# `os.getenv`) as if they came from the actual environment.
 
 from logger_bot.model import Extractor
+from logger_bot.logger import SimpleCSVLogger
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 
 extractor = Extractor()
+logger = SimpleCSVLogger()
 
 
 def speech2text(file_path, extractor: Extractor):
@@ -33,6 +41,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await file.download_to_drive(custom_path=file_path)
     text = speech2text(file_path, extractor=extractor)
     # TODO: clean up text
+    logger.write_record(text)
 
     logging.info(f"Escuche {text}")
     await context.bot.send_message(
@@ -41,7 +50,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 if __name__ == "__main__":
-    token = Path(".env").read_text().split("=")[1].strip()
+    load_dotenv()
+    token = os.environ["TELEGRAM_API_TOKEN"]
     application = ApplicationBuilder().token(token).build()
 
     handler = MessageHandler(
