@@ -2,8 +2,22 @@
 
 A Telegram bot that accepts voice messages, transcribes them using OpenAI Whisper, and parses workout data (exercise, reps, weight) for logging to a Google Sheet.
 
-## Architecture 
-![](./imgs/architecture.mmd)
+## Architecture
+```mermaid
+flowchart LR
+    user([User])
+    telegram(Telegram Bot)
+    server([Server])
+    model([Model Speech2Text])
+    logger([Logger])
+
+    user -- voice --> telegram
+    telegram -- webhook --> server
+    server -- audio --> model
+    model -- text --> server
+    server -- text --> logger
+```
+
 
 ## Requirements
 
