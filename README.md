@@ -50,6 +50,23 @@ python src/logger_bot/main.py
 
 The bot will listen for voice and audio messages. When it receives one, it downloads the file, transcribes it with Whisper, and replies with the transcription.
 
+## Viewing Your Log Data as a Table (launch_db_view)
+
+You can view your `log.csv` data as a searchable, filterable table in your web browser using [Datasette](https://datasette.io/):
+
+**Launch the database view locally**
+   ```bash
+   ./launch_db_view.sh
+   ```
+   This script:
+   - Imports your latest `log.csv` into a SQLite database called `log.db` (table: `logs`).
+   - Starts a local Datasette server.
+
+3. **Open your browser** to [http://127.0.0.1:8001](http://127.0.0.1:8001) — you'll see your workouts as an interactive table.
+
+You can search, sort, and filter columns right from this UI.
+
+
 ## Project structure
 
 ```
@@ -57,4 +74,5 @@ src/logger_bot/
 ├── main.py     # Bot entry point and Telegram handler
 ├── model.py    # Whisper transcription and workout data extraction
 ├── storage.py  # Google Sheets integration (not yet wired in)
+launch_db_view.sh   # Script to create a SQLite DB from log.csv and view with Datasette
 ```
