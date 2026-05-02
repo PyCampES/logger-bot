@@ -18,23 +18,31 @@ from logger_bot.loggers import SqliteLogger
 
 def create_audio_handler(transcriber, logger):
     async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        audio = update.message.audio or update.message.voice or update.message.document
-        if not audio:
-            await context.bot.send_message(
-                chat_id=update.effective_chat.id, text="No audio file found."
+        try:
+            audio = (
+                update.message.audio or update.message.voice or update.message.document
             )
-            return
-        file = await context.bot.get_file(audio.file_id)
-        file_path = f"received_{audio.file_id}"
-        await file.download_to_drive(custom_path=file_path)
-        text = transcriber.transcribe(file_path)
-        entry = parse_text(text)
-        logger.write_record(entry)
+            if not audio:
+                await context.bot.send_message(
+                    chat_id=update.effective_chat.id, text="No audio file found."
+                )
+                return
+            file = await context.bot.get_file(audio.file_id)
+            file_path = f"received_{audio.file_id}"
+            await file.download_to_drive(custom_path=file_path)
+            text = transcriber.transcribe(file_path)
+            entry = parse_text(text)
+            logger.write_record(entry)
 
-        print(f"He escuchado esto: {json.dumps(entry)}")
-        await context.bot.send_message(
-            chat_id=update.effective_chat.id, text=f"Escuche esto: {json.dumps(entry)}"
-        )
+            print(f"He escuchado esto: {json.dumps(entry)}")
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id,
+                text=f"Escuche esto: {json.dumps(entry)}",
+            )
+        except Exception as e:
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=f"Error: {e}"
+            )
 
     handler = MessageHandler(
         (filters.TEXT & ~filters.COMMAND)
@@ -78,41 +86,51 @@ def create_last_handler(db_conn: sqlite3.Connection, table_name: str):
             )
             return
 
-        exercise = context.args[0]
-        entry = get_last_entry_for_exercise(
-            db_conn=db_conn, table_name=table_name, exercise=exercise
-        )
-        await context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            parse_mode="MarkdownV2",
-            text=f"""\
-            Last {exercise} workout:\n
-            ```
-            {json.dumps(entry, indent=2)}
-            ```
-            """,
-        )
+        try:
+            exercise = context.args[0]
+            entry = get_last_entry_for_exercise(
+                db_conn=db_conn, table_name=table_name, exercise=exercise
+            )
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id,
+                parse_mode="MarkdownV2",
+                text=f"""\
+                Last {exercise} workout:\n
+                ```
+                {json.dumps(entry, indent=2)}
+                ```
+                """,
+            )
+        except Exception as e:
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=f"Error: {e}"
+            )
 
     return CommandHandler("last", last, has_args=True)
 
 
 def create_sql_handler(db_conn: sqlite3.Connection):
     async def sql(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        query = " ".join(context.args) if context.args else ""
-        if not query:
-            await update.message.reply_text("No query detected")
-            return
+        try:
+            query = " ".join(context.args) if context.args else ""
+            if not query:
+                await update.message.reply_text("No query detected")
+                return
 
-        db_conn.row_factory = lambda cursor, row: {
-            col[0]: row[i] for i, col in enumerate(cursor.description)
-        }
+            db_conn.row_factory = lambda cursor, row: {
+                col[0]: row[i] for i, col in enumerate(cursor.description)
+            }
 
-        cur = db_conn.cursor()
-        rows = cur.execute(query).fetchall()
-        text = f"```\n{json.dumps(rows, indent=2)}\n```"
-        await context.bot.send_message(
-            chat_id=update.effective_chat.id, text=text, parse_mode="MarkdownV2"
-        )
+            cur = db_conn.cursor()
+            rows = cur.execute(query).fetchall()
+            text = f"```\n{json.dumps(rows, indent=2)}\n```"
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text, parse_mode="MarkdownV2"
+            )
+        except Exception as e:
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=f"Error: {e}"
+            )
 
     return CommandHandler("sql", sql)
 

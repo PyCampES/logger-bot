@@ -47,9 +47,9 @@ class CSVLogger(Logger):
 
 
 class SqliteLogger(Logger):
-    def __init__(self, filename: str):
+    def __init__(self, filename: str, table_name="workout"):
         self.filename = filename
-        self.table_name = "workout"
+        self.table_name = table_name
         self.headers = [
             "date",
             "time",
