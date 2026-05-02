@@ -1,25 +1,19 @@
-import os
-import logging
 import json
+import os
 import sqlite3
 
 from telegram import Update
 from telegram.ext import (
     ApplicationBuilder,
+    CommandHandler,
     ContextTypes,
     MessageHandler,
     filters,
-    CommandHandler,
 )
 from dotenv import load_dotenv
 
-
 from logger_bot.extraction import WhisperTranscriber, parse_text
-from logger_bot.logger import SimpleCSVLogger
-
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
-)
+from logger_bot.loggers import SqliteLogger
 
 
 def create_audio_handler(transcriber, logger):
@@ -37,7 +31,7 @@ def create_audio_handler(transcriber, logger):
         entry = parse_text(text)
         logger.write_record(entry)
 
-        logging.info(f"He escuchado esto: {json.dumps(entry)}")
+        print(f"He escuchado esto: {json.dumps(entry)}")
         await context.bot.send_message(
             chat_id=update.effective_chat.id, text=f"Escuche esto: {json.dumps(entry)}"
         )
@@ -53,14 +47,16 @@ def create_audio_handler(transcriber, logger):
     return handler
 
 
-def get_last_entry_for_exercise(db_connection: sqlite3.Connection, exercise: str):
-    db_connection.row_factory = lambda cursor, row: {
+def get_last_entry_for_exercise(
+    db_conn: sqlite3.Connection, table_name: str, exercise: str
+):
+    db_conn.row_factory = lambda cursor, row: {
         col[0]: row[i] for i, col in enumerate(cursor.description)
     }
-    cur = db_connection.cursor()
+    cur = db_conn.cursor()
     res = cur.execute(
         f"""
-        select * from logs
+        select * from {table_name}
         where exercise like "%{exercise}%"
         order by date desc,time desc
         limit 1
@@ -69,7 +65,7 @@ def get_last_entry_for_exercise(db_connection: sqlite3.Connection, exercise: str
     return res.fetchone()
 
 
-def create_last_handler(db_connection: sqlite3.Connection):
+def create_last_handler(db_conn: sqlite3.Connection, table_name: str):
     async def last(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not context.args:
             await context.bot.send_message(
@@ -84,35 +80,34 @@ def create_last_handler(db_connection: sqlite3.Connection):
 
         exercise = context.args[0]
         entry = get_last_entry_for_exercise(
-            db_connection=db_connection, exercise=exercise
+            db_conn=db_conn, table_name=table_name, exercise=exercise
         )
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
             parse_mode="MarkdownV2",
             text=f"""\
-    {exercise} Last workout:
-
-    ```
-    {json.dumps(entry, indent=2)}
-    ```\
-    """,
+            Last {exercise} workout:\n
+            ```
+            {json.dumps(entry, indent=2)}
+            ```
+            """,
         )
 
     return CommandHandler("last", last, has_args=True)
 
 
-def create_sql_handler(db_connection: sqlite3.Connection):
+def create_sql_handler(db_conn: sqlite3.Connection):
     async def sql(update: Update, context: ContextTypes.DEFAULT_TYPE):
         query = " ".join(context.args) if context.args else ""
         if not query:
             await update.message.reply_text("No query detected")
             return
 
-        db_connection.row_factory = lambda cursor, row: {
+        db_conn.row_factory = lambda cursor, row: {
             col[0]: row[i] for i, col in enumerate(cursor.description)
         }
 
-        cur = db_connection.cursor()
+        cur = db_conn.cursor()
         rows = cur.execute(query).fetchall()
         text = f"```\n{json.dumps(rows, indent=2)}\n```"
         await context.bot.send_message(
@@ -129,17 +124,19 @@ async def health(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     load_dotenv()
     application = ApplicationBuilder().token(os.environ["TELEGRAM_API_TOKEN"]).build()
+
+    db_path = "./log.db"
+    table_name = "workout"
     audio_handler = create_audio_handler(
-        transcriber=WhisperTranscriber(), logger=SimpleCSVLogger()
+        transcriber=WhisperTranscriber(), logger=SqliteLogger(filename=db_path)
     )
     application.add_handler(audio_handler)
 
-    db_path = "./log.db"
-    db_connection = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
-    last_handler = create_last_handler(db_connection=db_connection)
+    db_conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    last_handler = create_last_handler(db_conn=db_conn, table_name=table_name)
     application.add_handler(last_handler)
 
-    sql_handler = create_sql_handler(db_connection=db_connection)
+    sql_handler = create_sql_handler(db_conn=db_conn)
     application.add_handler(sql_handler)
 
     application.add_handler(CommandHandler("health", health))

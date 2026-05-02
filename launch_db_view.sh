@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-uv run sqlite-utils insert log.db logs log.csv --csv
-
+# Only needed if the initial export was on csv
+# uv run sqlite-utils insert log.db workout log.csv --csv
+DB_FILE="${1:-./log.db}"
+   
 PORT=8001
 PID=$(lsof -ti :$PORT || true)
 if [ -n "$PID" ]; then
@@ -17,4 +19,4 @@ while ss -ltn | grep -q ":$PORT "; do
   echo "Port $PORT is still in use. Waiting..."
   sleep 0.1
 done
-uv run datasette log.db
+uv run datasette "${DB_FILE}"
