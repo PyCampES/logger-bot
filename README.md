@@ -1,6 +1,6 @@
 # Logger Bot
 
-A Telegram bot that accepts voice messages, transcribes them using OpenAI Whisper, and parses workout data (exercise, reps, weight) for logging to a Google Sheet.
+A Telegram bot that accepts voice messages, transcribes them, and parses workout data (exercise, reps, weight) for logging to a csv or database.
 
 ## Architecture
 ```mermaid
@@ -10,12 +10,14 @@ flowchart LR
     server([Server])
     extractor([Speech2Text + parsing])
     logger([Logger])
+    db([Database])
 
     user -- voice --> telegram
     telegram -- webhook --> server
     server -- audio --> extractor
     extractor -- text --> server
     server -- text --> logger
+    logger --entry--> db
 ```
 
 
@@ -24,55 +26,59 @@ flowchart LR
 - [`uv`](https://github.com/astral-sh/uv) package manager
 - A Telegram bot token (from [@BotFather](https://t.me/BotFather))
 
-## Setup
+## Setup your bot server using `uv` 
+1. **Configure the bot token**
+[Create a bot](https://core.telegram.org/bots/tutorial#introduction) using Telegram's `@BotFather`.
+Grab your token and create a `.env` file in the project root with it like this:
+```
+TELEGRAM_API_TOKEN=your_telegram_bot_token_here
+```
 
-1. **Install dependencies**
-   ```bash
-   uv sync
-   ```
+2. **Launch Server**
+Make sure you have [uv](https://docs.astral.sh/uv/getting-started/installation/) installed in your machine.
 
-2. **Configure the bot token**
-
-   Create a `.env` file in the project root:
-   ```
-   TELEGRAM_API_TOKEN=your_telegram_bot_token_here
-   ```
-
-3. **Configure Google Sheets access**
-
-   Place your service account key file at the project root as `credentials.json`, and share the `"Logueala"` spreadsheet with the service account email.
-
-## Running the bot
-
+Run this on your terminal (at project root level):
 ```bash
-python src/logger_bot/main.py
+./run_server.sh
+```
+That will set up the venv, install dependencies and launch the server that communicates with your telegram bot.
+
+You can healthcheck the server typing `/health` on your telegram bot chat.
+
+## Using the bot
+The bot will listen for voice, messages and commands (start with `/`).
+
+You can send a voice message describing your workout. 
+The bot transcribes it, parses the result, and logs it into the database/csv file.
+
+The bot understands natural language, for example:
+
+- *"Press de banca, 10 repeticiones, 80 kilos, categoría pecho"*
+- *"Sentadilla 5 reps 100 kg"*
+- *"Shoulder press 8 repetitions 60 lbs"*
+
+### Bot Commands
+These are the commands
+- `/last <exercise>`: Returns the most recent logged set for a given exercise, as a JSON code block, for example `/last sentadilla`.
+- `/sql <query>`: Runs a raw SQL query against `log.db` and returns the results as a JSON code block. The connection is read-only, so only `SELECT` statements work, for example:
+```
+/sql
+SELECT * FROM logs 
+where exercise like "%press%"
+order by date desc
+LIMIT 10
 ```
 
-The bot will listen for voice and audio messages. When it receives one, it downloads the file, transcribes it with Whisper, and replies with the transcription.
-
-## Viewing Your Log Data as a Table (launch_db_view)
-
-You can view your `log.csv` data as a searchable, filterable table in your web browser using [Datasette](https://datasette.io/):
-
-**Launch the database view locally**
-   ```bash
-   ./launch_db_view.sh
-   ```
-   This script:
-   - Imports your latest `log.csv` into a SQLite database called `log.db` (table: `logs`).
-   - Starts a local Datasette server.
-
-3. **Open your browser** to [http://127.0.0.1:8001](http://127.0.0.1:8001) — you'll see your workouts as an interactive table.
-
-You can search, sort, and filter columns right from this UI.
-
-
-## Project structure
-
+**Launch the database view**
+You can visualize your database and run queries against it using a UI.
+Run this command to launch the UI:
+```bash
+./launch_db_view.sh
 ```
-src/logger_bot/
-├── main.py     # Bot entry point and Telegram handler
-├── model.py    # Whisper transcription and workout data extraction
-├── storage.py  # Google Sheets integration (not yet wired in)
-launch_db_view.sh   # Script to create a SQLite DB from log.csv and view with Datasette
-```
+
+This script:
+- Imports your latest `log.csv` into a SQLite database called `log.db` (table: `logs`).
+- Starts a local Datasette server.
+
+Open your browser on [http://127.0.0.1:8001](http://127.0.0.1:8001) — you'll see your workouts as an interactive table.
+
