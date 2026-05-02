@@ -60,7 +60,7 @@ The bot understands natural language, for example:
 ### Bot Commands
 These are the commands
 - `/last <exercise>`: Returns the most recent logged set for a given exercise, as a JSON code block, for example `/last sentadilla`.
-- `/sql <query>`: Runs a raw SQL query against `log.db` and returns the results as a JSON code block. The connection is read-only, so only `SELECT` statements work, for example:
+- `/sql <query>`: Runs a SQL query against `log.db` and returns the results as a JSON code block. The connection is read-only, so only `SELECT` statements work, for example:
 ```
 /sql
 SELECT * FROM logs 
