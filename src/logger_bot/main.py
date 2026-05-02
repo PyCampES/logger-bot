@@ -122,6 +122,10 @@ def create_sql_handler(db_connection: sqlite3.Connection):
     return CommandHandler("sql", sql)
 
 
+async def health(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Server is running")
+
+
 def main():
     load_dotenv()
     application = ApplicationBuilder().token(os.environ["TELEGRAM_API_TOKEN"]).build()
@@ -137,6 +141,8 @@ def main():
 
     sql_handler = create_sql_handler(db_connection=db_connection)
     application.add_handler(sql_handler)
+
+    application.add_handler(CommandHandler("health", health))
 
     application.run_polling()
 
