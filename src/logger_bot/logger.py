@@ -24,7 +24,6 @@ class SimpleCSVLogger(Logger):
             "raw_text",
         ]
         if not Path(self.filename).exists():
-            print("here")
             with open(self.filename, "w", newline="") as f:
                 writer = csv.writer(f)
                 writer.writerow(self.headers)
