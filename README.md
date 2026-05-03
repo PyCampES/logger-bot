@@ -89,3 +89,11 @@ Open your browser on [http://127.0.0.1:8001](http://127.0.0.1:8001) — you'll s
 
 ## GPU Support on the server
 The server detects automatically available GPU on the machine and uses it to compute run the neural network computation (Speech2Text), which makes it much faster.
+
+## Docker
+You can run the server inside docker using [Dockerfile](./Dockerfile) running:
+```bash
+docker build -f Dockerfile -t bot
+docker run -it bot
+
+```
