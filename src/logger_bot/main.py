@@ -34,10 +34,10 @@ def create_audio_handler(transcriber, logger):
             entry = parse_text(text)
             logger.write_record(entry)
 
-            print(f"He escuchado esto: {json.dumps(entry)}")
+            print(f"I heard: {json.dumps(entry)}")
             await context.bot.send_message(
                 chat_id=update.effective_chat.id,
-                text=f"Escuche esto: {json.dumps(entry)}",
+                text=f"I heard:\n{json.dumps(entry)}",
             )
         except Exception as e:
             await context.bot.send_message(
@@ -159,6 +159,7 @@ def main():
 
     application.add_handler(CommandHandler("health", health))
 
+    print("Server up, you're ready to go.")
     application.run_polling()
 
 
