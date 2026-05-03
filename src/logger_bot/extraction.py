@@ -1,11 +1,18 @@
 import whisper
 import re
+import torch
 
 
 class WhisperTranscriber:
     def __init__(self, model_size: str = "base"):
         print("Loading Whisper model...")
-        self.model = whisper.load_model(model_size)
+        if torch.cuda.is_available():
+            device = "cuda"
+        elif torch.backends.mps.is_available():
+            device = "mps"
+        else:
+            device = "cpu"
+        self.model = whisper.load_model(model_size, device=device)
         print("Whisper model loaded.")
 
     def transcribe(self, file_path: str) -> str:
