@@ -4,7 +4,7 @@ import torch
 
 
 class WhisperTranscriber:
-    def __init__(self, model_size: str = "base"):
+    def __init__(self, model_size: str = "medium"):
         print("Loading Whisper model...")
         if torch.cuda.is_available():
             device = "cuda"
@@ -12,6 +12,7 @@ class WhisperTranscriber:
             device = "mps"
         else:
             device = "cpu"
+        print(f"Using device: {device}")
         self.model = whisper.load_model(model_size, device=device)
         print("Whisper model loaded.")
 
