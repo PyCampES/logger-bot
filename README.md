@@ -93,7 +93,7 @@ The server detects automatically available GPU on the machine and uses it to com
 ## Docker
 You can run the server inside docker using [Dockerfile](./Dockerfile) running:
 ```bash
-docker build -f Dockerfile -t bot
+docker build -f Dockerfile . -t bot
 docker run -it bot
 
 ```
