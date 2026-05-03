@@ -78,6 +78,9 @@ Run this command to launch the UI:
 ./launch_db_view.sh
 ```
 
+![](imgs/screenshot-db.png)
+
+
 This script:
 - Imports your latest `log.csv` into a SQLite database called `log.db` (table: `logs`).
 - Starts a local Datasette server.
