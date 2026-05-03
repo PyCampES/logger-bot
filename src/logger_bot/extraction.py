@@ -1,10 +1,12 @@
+import os
 import whisper
 import re
 import torch
 
 
 class WhisperTranscriber:
-    def __init__(self, model_size: str = "base"):
+    def __init__(self, model_size: str | None = None):
+        model_size = model_size or os.environ.get("MODEL_SIZE", "base")
         print("Loading Whisper model...")
         if torch.cuda.is_available():
             device = "cuda"
