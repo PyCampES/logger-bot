@@ -1,6 +1,6 @@
 # Logger Bot
 
-A Telegram bot that accepts voice messages, transcribes them, and parses workout data (exercise, reps, weight) for logging to a csv or database.
+A Telegram bot that accepts voice messages, transcribes them, and parses workout data (exercise, reps, weight) for logging to a database.
 
 ## Architecture
 ```mermaid
