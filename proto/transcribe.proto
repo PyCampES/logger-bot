@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package logger_bot.v1;
+
+option go_package = "github.com/santiago-jauregui/logger-bot/internal/whisper/pb;pb";
+
+service Transcriber {
+  rpc Transcribe(TranscribeRequest) returns (TranscribeResponse);
+}
+
+message TranscribeRequest {
+  bytes  audio     = 1;
+  string mime_type = 2;
+}
+
+message TranscribeResponse {
+  string text = 1;
+}
