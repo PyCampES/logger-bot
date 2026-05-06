@@ -3,6 +3,7 @@ module github.com/santiago-jauregui/logger-bot
 go 1.26.2
 
 require (
+	github.com/go-telegram/bot v1.20.0
 	golang.org/x/text v0.36.0
 	google.golang.org/grpc v1.81.0
 	google.golang.org/protobuf v1.36.11
