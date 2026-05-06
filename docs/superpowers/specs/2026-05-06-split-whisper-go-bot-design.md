@@ -200,7 +200,7 @@ func main() {
 2. Go: bot.go-telegram poller receives Update via getUpdates;
    default handler dispatches if Message has Voice/Audio/Document
 3. Go: telegram/audio.go
-   ├─► picks msg.Voice ?? msg.Audio ?? msg.Document  (mirrors current Python order)
+   ├─► picks msg.Audio ?? msg.Voice ?? msg.Document  (mirrors current Python order)
    ├─► b.GetFile(ctx, &GetFileParams{FileID: id})    → File{FilePath}
    ├─► b.FileDownloadLink(file)                      → https URL
    ├─► http.Get(url)                                 → audio bytes in []byte (capped at 20MB)
