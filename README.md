@@ -1,99 +1,75 @@
 # Logger Bot
 
-A Telegram bot that accepts voice messages, transcribes them, and parses workout data (exercise, reps, weight) for logging to a database.
+Telegram bot that ingests voice messages, transcribes them via a companion
+[Whisper service](https://github.com/santiago-jauregui/logger-bot-whisper), parses
+workout data (exercise / reps / weight / category / unit), and appends each
+set to a SQLite DB. Telegram commands `/last <exercise>` and `/sql <query>`
+read back from that DB; `/health` is a liveness check.
 
 ## Architecture
+
 ```mermaid
 flowchart LR
-    user([User])
-    telegram(Telegram Bot)
-    server([Server])
-    extractor([Speech2Text + parsing])
-    logger([Logger])
-    db([Database])
-
-    user -- voice --> telegram
-    telegram -- webhook --> server
-    server -- audio --> extractor
-    extractor -- text --> server
-    server -- text --> logger
-    logger --entry--> db
+    user([User]) -- voice --> tg(Telegram)
+    tg --> bot[logger-bot (Go)]
+    bot -- gRPC --> wh[logger-bot-whisper (Python)]
+    bot --> db[(SQLite)]
 ```
 
+## Run with docker-compose
 
-## Requirements
+Pre-reqs: Docker, a Telegram bot token from [@BotFather](https://t.me/BotFather).
 
-- [`uv`](https://github.com/astral-sh/uv) package manager
-- A Telegram bot token (from [@BotFather](https://t.me/BotFather))
-
-## Setup your bot server using `uv` 
-1. **Configure the bot token**
-[Create a bot](https://core.telegram.org/bots/tutorial#introduction) using Telegram's `@BotFather`.
-Grab your token and create a `.env` file in the project root with it like this:
-```
-TELEGRAM_API_TOKEN=your_telegram_bot_token_here
-```
-
-2. **Launch Server**
-Make sure you have [uv](https://docs.astral.sh/uv/getting-started/installation/) installed in your machine.
-
-Run this on your terminal (at project root level):
 ```bash
-./run_server.sh
+cp .env.example .env
+# edit .env and set TELEGRAM_API_TOKEN
+docker compose up -d
 ```
-That will set up the venv, install dependencies and launch the server that communicates with your telegram bot.
 
-You can healthcheck the server typing `/health` on your telegram bot chat and see this:
-![](imgs/screenshot-health.png)
+That pulls `ttl.sh/loggerbot:24h` and `ttl.sh/loggerbot-whisper:24h` from
+the ephemeral registry. Compose waits for Whisper's health check to flip
+to SERVING (model load takes ~10–30s on first cold start) before starting
+the bot.
 
-## Using the bot
-The bot will listen for voice, messages and commands (start with `/`).
+The SQLite database lives in the named volume `loggerbot-data`. To inspect
+it, mount the volume into a sqlite3 container:
 
-You can send a voice message describing your workout. 
-The bot transcribes it, parses the result, and logs it into the database/csv file.
-The bot understands natural language, for example, you can say:
+```bash
+docker run --rm -it -v logger-bot_loggerbot-data:/data alpine \
+  sh -c "apk add sqlite && sqlite3 /data/log.db"
+```
+
+## Bot commands
+
+- `/last <exercise>` — most recent logged set for the exercise (substring match)
+- `/sql <query>` — raw SELECT against the DB (read-only connection)
+- `/health` — liveness ping
+
+The bot understands voice messages with workout descriptions in Spanish
+or English:
 
 - *"Press de banca, 10 repeticiones, 80 kilos, categoría pecho"*
 - *"Sentadilla 5 reps 100 kg"*
 - *"Shoulder press 8 repetitions 60 lbs"*
 
-![](imgs/screenshot-log.png)
+## Develop
 
-### Bot Commands
-These are the commands
-- `/last <exercise>`: Returns the most recent logged set for a given exercise, as a JSON code block, for example `/last sentadilla`.
-
-![](imgs/screenshot-last.png)
-
-
-- `/sql <query>`: Runs a SQL query against `log.db` and returns the results as a JSON code block. The connection is read-only, so only `SELECT` statements work, for example:
-
-![](imgs/screenshot-sql.png)
-
-
-**Launch the database view**
-You can visualize your database and run queries against it using a UI.
-Run this command to launch the UI:
 ```bash
-./launch_db_view.sh
+make gen        # regenerate proto stubs
+go test ./...   # unit + store integration
+make e2e        # docker-compose smoke test (requires grpcurl + jq)
 ```
 
-![](imgs/screenshot-db.png)
+## Configuration
 
+| Env var | Purpose | Default |
+| --- | --- | --- |
+| `TELEGRAM_API_TOKEN` | required Telegram bot token | — |
+| `WHISPER_ADDR` | gRPC target for the Whisper service | `whisper:50051` |
+| `DB_PATH` | SQLite path | `/data/log.db` |
+| `MODEL_SIZE` | Whisper model name (consumed by the Whisper service) | `base` |
 
-This script:
-- Imports your latest `log.csv` into a SQLite database called `log.db` (table: `logs`).
-- Starts a local Datasette server.
+## Companion repo
 
-Open your browser on [http://127.0.0.1:8001](http://127.0.0.1:8001) — you'll see your workouts as an interactive table with an SQL interface to interact with it.
-
-## GPU Support on the server
-The server detects automatically available GPU on the machine and uses it to compute run the neural network computation (Speech2Text), which makes it much faster.
-
-## Docker
-You can run the server inside docker using [Dockerfile](./Dockerfile) running:
-```bash
-docker build -f Dockerfile . -t bot
-docker run -it bot
-
-```
+The Whisper service lives at [logger-bot-whisper](https://github.com/santiago-jauregui/logger-bot-whisper).
+Its `proto/transcribe.proto` is a copy of this repo's; keep them in sync.
