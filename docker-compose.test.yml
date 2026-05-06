@@ -1,0 +1,6 @@
+# Override that exposes Whisper's gRPC port to localhost so the e2e
+# smoke test can hit it directly. Production runs do NOT use this file.
+services:
+  whisper:
+    ports:
+      - "50051:50051"

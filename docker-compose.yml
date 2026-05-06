@@ -1,0 +1,32 @@
+services:
+  whisper:
+    image: ttl.sh/loggerbot-whisper:24h
+    environment:
+      MODEL_SIZE: ${MODEL_SIZE:-base}
+      GRPC_PORT: "50051"
+    healthcheck:
+      # Use grpc.health.v1.Health via grpc_health_probe (statically baked into the
+      # whisper image at build time would be cleaner; for now we shell out to a
+      # python one-liner that's already available).
+      test: ["CMD", "python", "-c", "import grpc; from grpc_health.v1 import health_pb2, health_pb2_grpc; ch = grpc.insecure_channel('localhost:50051'); s = health_pb2_grpc.HealthStub(ch); s.Check(health_pb2.HealthCheckRequest()); print('ok')"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 60s
+    restart: unless-stopped
+
+  bot:
+    image: ttl.sh/loggerbot:24h
+    depends_on:
+      whisper:
+        condition: service_healthy
+    environment:
+      TELEGRAM_API_TOKEN: ${TELEGRAM_API_TOKEN}
+      WHISPER_ADDR: whisper:50051
+      DB_PATH: /data/log.db
+    volumes:
+      - loggerbot-data:/data
+    restart: unless-stopped
+
+volumes:
+  loggerbot-data:
