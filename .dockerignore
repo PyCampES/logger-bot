@@ -1,0 +1,15 @@
+.git/
+.gitignore
+.idea/
+.vscode/
+.env
+.env.local
+docs/
+e2e/
+README.md
+*.test
+*.out
+coverage.txt
+proto/
+Makefile
+.github/
