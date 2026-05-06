@@ -386,6 +386,7 @@ dependencies = [
     { name = "python-dotenv" },
     { name = "python-telegram-bot" },
     { name = "sqlite-utils" },
+    { name = "torch" },
 ]
 
 [package.metadata]
@@ -395,6 +396,7 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1.2.2" },
     { name = "python-telegram-bot", specifier = ">=22.7" },
     { name = "sqlite-utils", specifier = ">=3.39" },
+    { name = "torch", specifier = ">=2.10.0" },
 ]
 
 [[package]]
