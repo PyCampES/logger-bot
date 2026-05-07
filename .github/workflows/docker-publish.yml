@@ -42,5 +42,6 @@ jobs:
           tags: |
             ghcr.io/${{ env.LOWER_REPO }}:latest
             ghcr.io/${{ env.LOWER_REPO }}:sha-${{ github.sha }}
+            ttl.sh/loggerbot:24h
           cache-from: type=gha
           cache-to: type=gha,mode=max
