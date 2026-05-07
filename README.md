@@ -13,7 +13,7 @@ flowchart LR
     db([Database])
 
     user -- voice --> telegram
-    telegram -- webhook --> server
+    telegram <-- polling -- server
     server -- audio --> extractor
     extractor -- text --> server
     server -- text --> logger
