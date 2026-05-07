@@ -84,7 +84,7 @@ class SqliteLogger(Logger):
                 f"""
                 INSERT INTO {self.table_name}
                 (date, time, category, exercise, raw_text)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?)
             """,
                 row,
             )
