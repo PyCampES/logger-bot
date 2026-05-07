@@ -19,9 +19,6 @@ class CSVLogger(Logger):
             "time",
             "category",
             "exercise",
-            "reps",
-            "weight",
-            "unit",
             "raw_text",
         ]
         if not Path(self.filename).exists():
@@ -36,9 +33,6 @@ class CSVLogger(Logger):
             now.strftime("%H:%M:%S"),
             data.get("exercise", ""),
             data.get("category", ""),
-            data.get("reps", ""),
-            data.get("weight", ""),
-            data.get("unit", ""),
             data.get("raw_text", ""),
         ]
         with open(self.filename, "a", newline="") as f:
@@ -55,9 +49,6 @@ class SqliteLogger(Logger):
             "time",
             "category",
             "exercise",
-            "reps",
-            "weight",
-            "unit",
             "raw_text",
         ]
         self._ensure_table()
@@ -72,9 +63,6 @@ class SqliteLogger(Logger):
                     time TEXT,
                     category TEXT,
                     exercise TEXT,
-                    reps TEXT,
-                    weight TEXT,
-                    unit TEXT,
                     raw_text TEXT
                 )
             """
@@ -88,9 +76,6 @@ class SqliteLogger(Logger):
             now.strftime("%H:%M:%S"),
             data.get("category", ""),
             data.get("exercise", ""),
-            data.get("reps", ""),
-            data.get("weight", ""),
-            data.get("unit", ""),
             data.get("raw_text", ""),
         ]
         with sqlite3.connect(self.filename) as conn:
@@ -98,7 +83,7 @@ class SqliteLogger(Logger):
             c.execute(
                 f"""
                 INSERT INTO {self.table_name}
-                (date, time, category, exercise, reps, weight, unit, raw_text)
+                (date, time, category, exercise, raw_text)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
                 row,
