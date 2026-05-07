@@ -145,8 +145,10 @@ def main():
 
     db_path = "./log.db"
     table_name = "workout"
+    model_size = os.environ.get("MODEL_SIZE", "base")
+    transcriber = WhisperTranscriber(model_size=model_size)
     audio_handler = create_audio_handler(
-        transcriber=WhisperTranscriber(), logger=SqliteLogger(filename=db_path)
+        transcriber=transcriber, logger=SqliteLogger(filename=db_path)
     )
     application.add_handler(audio_handler)
 
@@ -159,6 +161,7 @@ def main():
 
     application.add_handler(CommandHandler("health", health))
 
+    print(f"Whisper model size: {model_size}")
     print("Server up, you're ready to go.")
     application.run_polling()
 

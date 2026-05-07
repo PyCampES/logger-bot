@@ -32,7 +32,10 @@ flowchart LR
 Grab your token and create a `.env` file in the project root with it like this:
 ```
 TELEGRAM_API_TOKEN=your_telegram_bot_token_here
+MODEL_SIZE=base
 ```
+
+`MODEL_SIZE` controls which Whisper model is loaded for transcription. It defaults to `base` if omitted. Common values include `tiny`, `base`, `small`, `medium`, and `large`.
 
 2. **Launch Server**
 Make sure you have [uv](https://docs.astral.sh/uv/getting-started/installation/) installed in your machine.
